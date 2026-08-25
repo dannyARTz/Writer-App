@@ -1,0 +1,1028 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Writing Desk</title>
+  
+  <!-- Dependencies via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/localforage@1.10.0/dist/localforage.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/turndown@7.1.2/dist/turndown.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+
+  <style>
+    :root {
+      --bg-color: #ffffff;
+      --bg-secondary: #f9f9f9;
+      --bg-tab-active: #ffffff;
+      --text-color: #1a1a1a;
+      --text-secondary: #6b7280;
+      --border-color: #e5e7eb;
+      --accent-color: #3b82f6;
+      --danger-color: #ef4444;
+      --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      --font-editor: Georgia, 'Times New Roman', Times, serif;
+      --font-editor-size: 18px;
+      --max-width: 720px;
+      --bg-image-url: none;
+      --bg-overlay-opacity: 0.85;
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #1a1a1a;
+      --bg-secondary: #222222;
+      --bg-tab-active: #2a2a2a;
+      --text-color: #e0e0e0;
+      --text-secondary: #9ca3af;
+      --border-color: #333333;
+      --accent-color: #60a5fa;
+    }
+
+    [data-theme="sepia"] {
+      --bg-color: #f4ecd8;
+      --bg-secondary: #eaddca;
+      --bg-tab-active: #f4ecd8;
+      --text-color: #5b4636;
+      --text-secondary: #8a7256;
+      --border-color: #d4c5a8;
+      --accent-color: #d97706;
+    }
+
+    [data-theme="night"] {
+      --bg-color: #1e293b;
+      --bg-secondary: #283449;
+      --bg-tab-active: #334155;
+      --text-color: #cbd5e1;
+      --text-secondary: #94a3b8;
+      --border-color: #334155;
+      --accent-color: #38bdf8;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: var(--font-ui);
+      transition: background-color 0.3s ease, color 0.3s ease;
+      overflow: hidden;
+    }
+
+    /* Lock Screen */
+    .lock-screen {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background-color: var(--bg-color);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 10000;
+    }
+    .lock-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 40px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      background-color: var(--bg-secondary);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    .lock-icon { font-size: 48px; }
+    .lock-input {
+      font-size: 24px;
+      letter-spacing: 12px;
+      text-align: center;
+      width: 150px;
+      padding: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      outline: none;
+    }
+    .lock-input:focus { border-color: var(--accent-color); }
+    .lock-error { color: var(--danger-color); font-size: 13px; height: 16px; }
+
+    /* Top Bar & Tabs */
+    .top-bar {
+      display: flex;
+      flex-direction: column;
+      border-bottom: 1px solid var(--border-color);
+      background-color: var(--bg-secondary);
+      position: relative;
+      z-index: 20;
+    }
+
+    .tab-bar {
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+      height: 40px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .tab-bar::-webkit-scrollbar { display: none; }
+
+    .tab {
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      margin-right: 4px;
+      background: transparent;
+      color: var(--text-secondary);
+      border: 1px solid transparent;
+      border-radius: 6px 6px 0 0;
+      cursor: pointer;
+      font-size: 13px;
+      white-space: nowrap;
+      max-width: 200px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .tab:hover { background-color: rgba(0,0,0,0.05); }
+    [data-theme="dark"] .tab:hover, [data-theme="night"] .tab:hover { background-color: rgba(255,255,255,0.05); }
+    
+    .tab.active {
+      background-color: var(--bg-tab-active);
+      color: var(--text-color);
+      border-color: var(--border-color);
+      border-bottom-color: var(--bg-tab-active);
+      margin-bottom: -1px;
+    }
+
+    .tab-title { overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+
+    .tab-close {
+      margin-left: 8px; padding: 2px; border-radius: 4px;
+      opacity: 0.5; font-size: 16px; line-height: 1;
+    }
+    .tab-close:hover { opacity: 1; background: rgba(0,0,0,0.1); }
+
+    .new-tab-btn {
+      background: none; border: none; color: var(--text-secondary);
+      font-size: 18px; padding: 4px 8px; cursor: pointer;
+    }
+    .new-tab-btn:hover { color: var(--text-color); }
+
+    /* Action Bar */
+    .action-bar {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 8px 16px; background-color: var(--bg-color);
+      border-top: 1px solid var(--border-color);
+    }
+
+    .doc-title-input {
+      flex: 1; background: transparent; border: none; font-size: 18px;
+      font-weight: 600; color: var(--text-color); outline: none; padding: 4px 0;
+    }
+    .doc-title-input::placeholder { color: var(--text-secondary); opacity: 0.6; }
+
+    .status-info { font-size: 12px; color: var(--text-secondary); margin-right: 16px; font-variant-numeric: tabular-nums; }
+    .status-saving { color: #f59e0b; }
+    .status-saved { color: #10b981; }
+
+    .actions-group { display: flex; gap: 8px; align-items: center; }
+
+    .btn {
+      background-color: var(--bg-secondary); border: 1px solid var(--border-color);
+      color: var(--text-color); padding: 6px 12px; border-radius: 6px;
+      font-size: 13px; cursor: pointer; font-family: var(--font-ui); transition: background 0.2s;
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn:hover { background-color: var(--border-color); }
+    .btn-danger { color: var(--danger-color); border-color: var(--danger-color); }
+
+    /* Dropdowns */
+    .dropdown { position: relative; display: inline-block; }
+    .dropdown-menu {
+      display: none; position: absolute; right: 0; background-color: var(--bg-color);
+      min-width: 180px; box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+      border: 1px solid var(--border-color); border-radius: 6px; z-index: 100; overflow: hidden;
+    }
+    .dropdown-menu button {
+      width: 100%; text-align: left; background: none; border: none; padding: 10px 16px;
+      cursor: pointer; color: var(--text-color); font-size: 13px; font-family: var(--font-ui);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .dropdown-menu button:hover { background-color: var(--bg-secondary); }
+    
+    .settings-menu {
+      min-width: 300px; padding: 16px; display: flex; flex-direction: column; gap: 20px;
+    }
+    .settings-group { display: flex; flex-direction: column; gap: 8px; }
+    .settings-label {
+      font-size: 12px; font-weight: 600; color: var(--text-secondary);
+      text-transform: uppercase; letter-spacing: 0.05em;
+    }
+    .settings-row { display: flex; align-items: center; gap: 8px; }
+    .settings-row input[type="range"] { flex: 1; }
+    .bg-options-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .bg-option {
+      width: 100%; height: 50px; border-radius: 4px; border: 2px solid transparent;
+      cursor: pointer; background-size: cover; background-position: center;
+    }
+    .bg-option.active { border-color: var(--accent-color); }
+    .bg-option-none { display:flex; align-items:center; justify-content:center; font-size:10px; color:var(--text-secondary); background-color: var(--bg-secondary); }
+    
+    .pin-display { font-size: 20px; letter-spacing: 4px; font-family: monospace; color: var(--text-secondary); }
+
+    /* Main Area & Background Layers */
+    .main-area {
+      height: calc(100vh - 40px - 53px); display: flex; flex-direction: column;
+      overflow-y: auto; position: relative; background-color: var(--bg-color);
+      background-image: var(--bg-image-url); background-size: cover;
+      background-position: center; background-attachment: fixed;
+    }
+    .main-area::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      background-color: var(--bg-color); opacity: var(--bg-overlay-opacity);
+      pointer-events: none; z-index: 0;
+    }
+
+    .toolbar {
+      position: sticky; top: 0; display: flex; justify-content: center;
+      align-items: center; gap: 4px; padding: 8px; background-color: var(--bg-color);
+      z-index: 10; border-bottom: 1px solid var(--border-color);
+    }
+
+    .tool-btn {
+      background: none; border: 1px solid transparent; padding: 6px 10px;
+      border-radius: 4px; cursor: pointer; color: var(--text-secondary);
+      font-size: 14px; font-family: var(--font-ui); display: flex; align-items: center;
+    }
+    .tool-btn:hover { background-color: var(--bg-secondary); }
+    .tool-btn.active { background-color: var(--border-color); color: var(--text-color); }
+
+    .divider { width: 1px; height: 20px; background-color: var(--border-color); margin: 0 4px; }
+
+    .color-tool { position: relative; display: flex; align-items: center; cursor: pointer; }
+    .color-tool input[type="color"] { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
+    .color-swatch { width: 14px; height: 14px; background-color: var(--text-color); border: 1px solid var(--border-color); border-radius: 3px; margin-left: 6px; }
+
+    .editor-container {
+      flex: 1; padding: 40px 24px 200px 24px; max-width: var(--max-width);
+      width: 100%; margin: 0 auto; position: relative; z-index: 1;
+    }
+
+    .editor {
+      outline: none; font-family: var(--font-editor); font-size: var(--font-editor-size);
+      line-height: 1.7; color: var(--text-color); min-height: 60vh;
+    }
+    .editor:empty:before { content: "Start writing your thoughts..."; color: var(--text-secondary); opacity: 0.4; pointer-events: none; }
+    .editor h1 { font-size: 2em; margin-top: 1.5em; margin-bottom: 0.5em; }
+    .editor h2 { font-size: 1.5em; margin-top: 1.2em; margin-bottom: 0.5em; }
+    .editor h3 { font-size: 1.2em; margin-top: 1em; margin-bottom: 0.5em; }
+    .editor p { margin-bottom: 1.2em; }
+    .editor blockquote { border-left: 4px solid var(--border-color); padding-left: 1.5em; margin: 1.5em 0; color: var(--text-secondary); font-style: italic; }
+    .editor pre { background: var(--bg-secondary); padding: 1em; border-radius: 6px; font-family: 'Courier New', Courier, monospace; font-size: 0.9em; overflow-x: auto; margin: 1.5em 0; }
+    .editor code { background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', Courier, monospace; font-size: 0.9em; }
+    .editor a { color: var(--accent-color); text-decoration: underline; }
+    .editor ul, .editor ol { padding-left: 2em; margin-bottom: 1.2em; }
+  </style>
+</head>
+<body>
+
+  <!-- Lock Screen -->
+  <div class="lock-screen" id="lockScreen" style="display: none;">
+    <div class="lock-container">
+      <div class="lock-icon">🔒</div>
+      <input type="password" class="lock-input" id="lockInput" maxlength="4" placeholder="••••">
+      <div class="lock-error" id="lockError"></div>
+      <button class="btn" id="unlockBtn" style="width: 100%;">Unlock</button>
+    </div>
+  </div>
+
+  <div class="top-bar">
+    <div class="tab-bar" id="tabBar"></div>
+    <div class="action-bar">
+      <input type="text" class="doc-title-input" id="docTitle" placeholder="Untitled">
+      <div class="status-info" id="statusInfo">0 words · 0 chars</div>
+      <div class="actions-group">
+        <div class="dropdown">
+          <button class="btn" id="copyBtn">Copy ▾</button>
+          <div class="dropdown-menu" id="copyMenu">
+            <button data-copy="rich">Copy as Rich Text</button>
+            <button data-copy="md">Copy as Markdown</button>
+            <button data-copy="plain">Copy as Plain Text</button>
+          </div>
+        </div>
+        <div class="dropdown">
+          <button class="btn" id="exportBtn">Export ▾</button>
+          <div class="dropdown-menu" id="exportMenu">
+            <button data-export="md">Export as Markdown (.md)</button>
+            <button data-export="txt">Export as Plain Text (.txt)</button>
+          </div>
+        </div>
+        <div class="dropdown">
+          <button class="btn" id="themeBtn">Mode ▾</button>
+          <div class="dropdown-menu" id="themeMenu">
+            <button data-theme-val="light">☀️ Light</button>
+            <button data-theme-val="dark">🌙 Dark</button>
+            <button data-theme-val="sepia">📄 Sepia</button>
+            <button data-theme-val="night">🌌 Night</button>
+          </div>
+        </div>
+        <div class="dropdown">
+          <button class="btn" id="settingsBtn">⚙️</button>
+          <div class="dropdown-menu settings-menu" id="settingsMenu">
+            
+            <div class="settings-group">
+              <span class="settings-label">Font Family</span>
+              <div class="settings-row">
+                <button class="btn" data-font="Georgia, serif" style="flex:1;">Serif</button>
+                <button class="btn" data-font="Inter, system-ui, sans-serif" style="flex:1;">Sans</button>
+                <button class="btn" data-font="Menlo, monospace" style="flex:1;">Mono</button>
+              </div>
+            </div>
+
+            <div class="settings-group">
+              <span class="settings-label">Font Size (<span id="fontSizeVal">18</span>px)</span>
+              <input type="range" id="fontSizeSlider" min="14" max="28" value="18">
+            </div>
+
+            <div class="settings-group">
+              <span class="settings-label">Background Image</span>
+              <div class="bg-options-grid">
+                <div class="bg-option bg-option-none active" data-bg="none">None</div>
+                <div class="bg-option" data-bg="https://images.unsplash.com/photo-1454165804606-c3d57bc86b42?auto=format&fit=crop&w=200&q=40" style="background-image: url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b42?auto=format&fit=crop&w=200&q=40');"></div>
+                <div class="bg-option" data-bg="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=200&q=40" style="background-image: url('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=200&q=40');"></div>
+                <div class="bg-option" data-bg="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=200&q=40" style="background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=200&q=40');"></div>
+              </div>
+              <label class="btn" style="margin-top: 8px; cursor: pointer; width: 100%;">
+                Upload Custom Image
+                <input type="file" id="bgUpload" accept="image/*" style="display: none;">
+              </label>
+            </div>
+
+            <div class="settings-group">
+              <span class="settings-label">Overlay Opacity (<span id="overlayVal">85</span>%)</span>
+              <input type="range" id="overlaySlider" min="0" max="100" value="85">
+            </div>
+
+            <div class="settings-group">
+              <span class="settings-label">Security</span>
+              <div class="settings-row" id="pinSettings">
+                <button class="btn" id="setPinBtn" style="flex:1;">Set PIN Lock</button>
+                <button class="btn btn-danger" id="removePinBtn" style="flex:1; display:none;">Remove PIN</button>
+              </div>
+              <button class="btn" id="lockNowBtn" style="width:100%; margin-top:8px; display:none;">Lock Now</button>
+            </div>
+
+            <div class="settings-group">
+              <span class="settings-label">Backup & Restore (Google Drive)</span>
+              <div class="settings-row">
+                <button class="btn" id="backupExportBtn" style="flex:1;">Export Backup</button>
+                <label class="btn" style="flex:1; cursor: pointer;">
+                  Import Backup
+                  <input type="file" id="backupImportInput" accept=".wdb,.json" style="display: none;">
+                </label>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-area">
+    <div class="toolbar" id="toolbar">
+      <button class="tool-btn" data-cmd="formatBlock" data-val="H1">H1</button>
+      <button class="tool-btn" data-cmd="formatBlock" data-val="H2">H2</button>
+      <button class="tool-btn" data-cmd="formatBlock" data-val="H3">H3</button>
+      <div class="divider"></div>
+      <button class="tool-btn" data-cmd="bold"><b>B</b></button>
+      <button class="tool-btn" data-cmd="italic"><i>I</i></button>
+      <button class="tool-btn" data-cmd="strikeThrough"><s>S</s></button>
+      <button class="tool-btn" data-cmd="createLink">Link</button>
+      
+      <label class="tool-btn color-tool" title="Text Color">
+        Color
+        <input type="color" id="textColorPicker" value="#000000">
+        <span class="color-swatch" id="colorSwatch"></span>
+      </label>
+
+      <div class="divider"></div>
+      <button class="tool-btn" data-cmd="insertUnorderedList">• List</button>
+      <button class="tool-btn" data-cmd="insertOrderedList">1. List</button>
+      <button class="tool-btn" data-cmd="formatBlock" data-val="BLOCKQUOTE">Quote</button>
+      <button class="tool-btn" data-cmd="formatBlock" data-val="PRE">Code</button>
+      <div class="divider"></div>
+      <button class="tool-btn" data-cmd="undo">↶</button>
+      <button class="tool-btn" data-cmd="redo">↷</button>
+    </div>
+
+    <div class="editor-container">
+      <div class="editor" id="editor" contenteditable="true"></div>
+    </div>
+  </div>
+
+  <script>
+    // --- State Management ---
+    let state = {
+      docs: {},
+      openTabs: [],
+      activeTabId: null,
+      theme: 'light',
+      font: 'Georgia, serif',
+      fontSize: 18,
+      bgUrl: 'none',
+      bgOverlay: 0.85,
+      pinHash: null
+    };
+
+    let saveTimeout = null;
+    let savedRange = null;
+
+    const store = localforage.createInstance({ name: 'WritingDesk' });
+    const turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
+
+    // --- DOM Elements ---
+    const editor = document.getElementById('editor');
+    const docTitleInput = document.getElementById('docTitle');
+    const tabBar = document.getElementById('tabBar');
+    const statusInfo = document.getElementById('statusInfo');
+    const textColorPicker = document.getElementById('textColorPicker');
+    const colorSwatch = document.getElementById('colorSwatch');
+    const lockScreen = document.getElementById('lockScreen');
+    const lockInput = document.getElementById('lockInput');
+    const lockError = document.getElementById('lockError');
+
+    // --- Initialization ---
+    async function init() {
+      const appState = await store.getItem('app_state') || {};
+      state.theme = appState.theme || 'light';
+      state.font = appState.font || 'Georgia, serif';
+      state.fontSize = appState.fontSize || 18;
+      state.bgUrl = appState.bgUrl || 'none';
+      state.bgOverlay = appState.bgOverlay !== undefined ? appState.bgOverlay : 0.85;
+      state.pinHash = appState.pinHash || null;
+      
+      // Check security first
+      if (state.pinHash) {
+        showLockScreen();
+      } else {
+        await loadAppData();
+      }
+
+      setupEventListeners();
+    }
+
+    async function loadAppData() {
+      await loadAllDocs();
+      const appState = await store.getItem('app_state') || {};
+      
+      state.openTabs = appState.openTabs || [];
+      state.activeTabId = appState.activeTabId;
+
+      if (Object.keys(state.docs).length === 0) {
+        await createNewDocument(true);
+      } else if (state.openTabs.length === 0) {
+        const firstDocId = Object.keys(state.docs)[0];
+        state.openTabs.push(firstDocId);
+        state.activeTabId = firstDocId;
+      }
+
+      applyTheme();
+      applySettingsUI();
+      renderTabs();
+      loadActiveDocument();
+    }
+
+    async function loadAllDocs() {
+      state.docs = {}; // Clear memory
+      await store.iterate((value, key) => {
+        if (key.startsWith('doc_')) {
+          state.docs[value.id] = value;
+        }
+      });
+    }
+
+    // --- Security (PIN Lock) ---
+    function hashPin(pin) {
+      // Simple hash for vanilla JS local verification
+      let hash = 0;
+      for (let i = 0; i < pin.length; i++) {
+        const char = pin.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return String(hash);
+    }
+
+    function showLockScreen() {
+      lockScreen.style.display = 'flex';
+      lockInput.value = '';
+      lockError.innerText = '';
+      setTimeout(() => lockInput.focus(), 100);
+    }
+
+    function hideLockScreen() {
+      lockScreen.style.display = 'none';
+    }
+
+    async function attemptUnlock() {
+      const enteredPin = lockInput.value;
+      if (hashPin(enteredPin) === state.pinHash) {
+        hideLockScreen();
+        await loadAppData();
+      } else {
+        lockError.innerText = 'Incorrect PIN';
+        lockInput.value = '';
+        lockInput.focus();
+      }
+    }
+
+    function setPin() {
+      const pin = prompt('Enter a 4-digit PIN:');
+      if (!pin) return;
+      if (pin.length !== 4 || isNaN(pin)) {
+        alert('PIN must be exactly 4 digits.');
+        return;
+      }
+      const confirmPin = prompt('Confirm your PIN:');
+      if (pin !== confirmPin) {
+        alert('PINs do not match.');
+        return;
+      }
+      state.pinHash = hashPin(pin);
+      saveAppState();
+      applySettingsUI();
+      alert('PIN Lock set successfully.');
+    }
+
+    function removePin() {
+      if (confirm('Remove PIN lock?')) {
+        state.pinHash = null;
+        saveAppState();
+        applySettingsUI();
+      }
+    }
+
+    // --- Document Management ---
+    async function createNewDocument(skipFocus = false) {
+      const newId = generateUUID();
+      const newDoc = { id: newId, title: '', content: '', createdAt: Date.now(), updatedAt: Date.now() };
+      state.docs[newId] = newDoc;
+      await store.setItem(`doc_${newId}`, newDoc);
+      state.openTabs.push(newId);
+      state.activeTabId = newId;
+      await saveAppState();
+      renderTabs();
+      loadActiveDocument();
+      if (!skipFocus) docTitleInput.focus();
+    }
+
+    function generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
+    function loadActiveDocument() {
+      if (!state.activeTabId) return;
+      const doc = state.docs[state.activeTabId];
+      if (!doc) return;
+      docTitleInput.value = doc.title;
+      editor.innerHTML = doc.content || '';
+      updateWordCount();
+      updateToolbarState();
+    }
+
+    function switchTab(id) {
+      if (id === state.activeTabId) return;
+      saveImmediate();
+      state.activeTabId = id;
+      saveAppState();
+      renderTabs();
+      loadActiveDocument();
+    }
+
+    async function closeTab(id) {
+      saveImmediate();
+      const index = state.openTabs.indexOf(id);
+      state.openTabs.splice(index, 1);
+      if (state.activeTabId === id) {
+        state.activeTabId = state.openTabs.length > 0 ? state.openTabs[Math.max(0, index - 1)] : null;
+      }
+      await saveAppState();
+      renderTabs();
+      loadActiveDocument();
+    }
+
+    // --- Persistence & Autosave ---
+    function scheduleAutosave() {
+      setStatus('Saving...', 'saving');
+      clearTimeout(saveTimeout);
+      saveTimeout = setTimeout(() => saveImmediate(), 3000);
+    }
+
+    async function saveImmediate() {
+      if (!state.activeTabId) return;
+      clearTimeout(saveTimeout);
+      const doc = state.docs[state.activeTabId];
+      if (!doc) return;
+      const newTitle = docTitleInput.value.trim();
+      const newContent = editor.innerHTML;
+      if (doc.title === newTitle && doc.content === newContent) {
+        setStatus(`Saved ${formatTime(Date.now())}`, 'saved');
+        return;
+      }
+      doc.title = newTitle;
+      doc.content = newContent;
+      doc.updatedAt = Date.now();
+      await store.setItem(`doc_${doc.id}`, doc);
+      setStatus(`Saved ${formatTime(doc.updatedAt)}`, 'saved');
+      renderTabs();
+    }
+
+    async function saveAppState() {
+      await store.setItem('app_state', {
+        openTabs: state.openTabs,
+        activeTabId: state.activeTabId,
+        theme: state.theme,
+        font: state.font,
+        fontSize: state.fontSize,
+        bgUrl: state.bgUrl,
+        bgOverlay: state.bgOverlay,
+        pinHash: state.pinHash
+      });
+    }
+
+    // --- Backup & Restore ---
+    async function exportBackup() {
+      saveImmediate();
+      const allDocs = [];
+      await store.iterate((value, key) => {
+        if (key.startsWith('doc_')) allDocs.push(value);
+      });
+      
+      const backupData = {
+        version: 1,
+        exportDate: new Date().toISOString(),
+        appState: {
+          theme: state.theme,
+          font: state.font,
+          fontSize: state.fontSize,
+          bgUrl: state.bgUrl,
+          bgOverlay: state.bgOverlay,
+          openTabs: state.openTabs,
+          activeTabId: state.activeTabId
+        },
+        docs: allDocs
+      };
+      
+      const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `writing-desk-backup-${new Date().toISOString().slice(0,10)}.wdb`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    async function importBackup(file) {
+      if (!confirm('Importing a backup will OVERWRITE all current data. Are you sure?')) return;
+      
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          if (!data.docs || !data.appState) throw new Error('Invalid backup file');
+          
+          // Clear current storage
+          await store.clear();
+          
+          // Restore docs
+          for (let doc of data.docs) {
+            await store.setItem(`doc_${doc.id}`, doc);
+          }
+          
+          // Restore state
+          state.docs = {};
+          state.openTabs = data.appState.openTabs || [];
+          state.activeTabId = data.appState.activeTabId;
+          state.theme = data.appState.theme || 'light';
+          state.font = data.appState.font || 'Georgia, serif';
+          state.fontSize = data.appState.fontSize || 18;
+          state.bgUrl = data.appState.bgUrl || 'none';
+          state.bgOverlay = data.appState.bgOverlay !== undefined ? data.appState.bgOverlay : 0.85;
+          
+          await saveAppState();
+          await loadAllDocs();
+          
+          applyTheme();
+          applySettingsUI();
+          renderTabs();
+          loadActiveDocument();
+          
+          alert('Backup restored successfully!');
+        } catch (err) {
+          alert('Failed to restore backup: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // --- UI Rendering ---
+    function renderTabs() {
+      tabBar.innerHTML = '';
+      state.openTabs.forEach(id => {
+        const doc = state.docs[id];
+        if (!doc) return;
+        const tab = document.createElement('div');
+        tab.className = `tab ${id === state.activeTabId ? 'active' : ''}`;
+        tab.onclick = () => switchTab(id);
+        const title = document.createElement('span');
+        title.className = 'tab-title';
+        title.innerText = doc.title || 'Untitled';
+        const closeBtn = document.createElement('span');
+        closeBtn.className = 'tab-close';
+        closeBtn.innerHTML = '&times;';
+        closeBtn.onclick = (e) => { e.stopPropagation(); closeTab(id); };
+        tab.appendChild(title);
+        tab.appendChild(closeBtn);
+        tabBar.appendChild(tab);
+      });
+      const newBtn = document.createElement('button');
+      newBtn.className = 'new-tab-btn';
+      newBtn.innerHTML = '+';
+      newBtn.onclick = () => createNewDocument();
+      tabBar.appendChild(newBtn);
+    }
+
+    function updateWordCount() {
+      const text = editor.innerText || '';
+      const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+      statusInfo.innerText = `${words} words · ${text.length} chars`;
+    }
+
+    function setStatus(message, type) {
+      statusInfo.innerText = type === 'saved' ? `Saved ${formatTime(Date.now())}` : message;
+      statusInfo.className = `status-info status-${type}`;
+    }
+
+    function formatTime(timestamp) {
+      return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // --- Smart Enter Key Handler (Escape Blocks) ---
+    function handleEnterKey(e) {
+      if (e.key !== 'Enter' || e.shiftKey) return;
+      const selection = window.getSelection();
+      if (!selection.rangeCount) return;
+      const range = selection.getRangeAt(0);
+      let blockElement = range.endContainer;
+      while (blockElement && blockElement !== editor) {
+        if (blockElement.nodeName === 'BLOCKQUOTE' || blockElement.nodeName === 'PRE') break;
+        blockElement = blockElement.parentNode;
+      }
+      if (blockElement && (blockElement.nodeName === 'BLOCKQUOTE' || blockElement.nodeName === 'PRE')) {
+        const tempRange = document.createRange();
+        tempRange.selectNodeContents(blockElement);
+        tempRange.setStart(range.endContainer, range.endOffset);
+        const isAtEnd = tempRange.toString() === '';
+        const isEmpty = blockElement.textContent.trim() === '';
+        if (isEmpty || isAtEnd) {
+          e.preventDefault();
+          const newP = document.createElement('p');
+          newP.innerHTML = '<br>';
+          blockElement.parentNode.insertBefore(newP, blockElement.nextSibling);
+          const newRange = document.createRange();
+          newRange.setStart(newP, 0);
+          newRange.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(newRange);
+          scheduleAutosave();
+        }
+      }
+    }
+
+    // --- Editor Toolbar & Settings Listeners ---
+    function setupEventListeners() {
+      editor.addEventListener('input', () => { updateWordCount(); scheduleAutosave(); });
+      editor.addEventListener('keydown', handleEnterKey);
+      docTitleInput.addEventListener('input', () => { scheduleAutosave(); renderTabs(); });
+
+      // Formatting Buttons
+      document.querySelectorAll('.tool-btn[data-cmd]').forEach(btn => {
+        btn.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          const cmd = btn.dataset.cmd;
+          const val = btn.dataset.val;
+          if (cmd === 'createLink') {
+            const url = prompt('Enter URL:');
+            if (url) document.execCommand(cmd, false, url);
+          } else if (cmd === 'formatBlock') {
+            if (editor.innerHTML.trim() === '') {
+              editor.innerHTML = '<p><br></p>';
+              const range = document.createRange();
+              range.selectNodeContents(editor);
+              range.collapse(true);
+              const sel = window.getSelection();
+              sel.removeAllRanges();
+              sel.addRange(range);
+            }
+            document.execCommand(cmd, false, val);
+          } else {
+            document.execCommand(cmd, false, null);
+          }
+          updateToolbarState();
+        });
+      });
+
+      // Text Color Picker
+      textColorPicker.addEventListener('mousedown', () => {
+        const sel = window.getSelection();
+        if (sel.rangeCount) savedRange = sel.getRangeAt(0);
+      });
+      textColorPicker.addEventListener('input', (e) => {
+        editor.focus();
+        if (savedRange) {
+          const sel = window.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(savedRange);
+        }
+        document.execCommand('foreColor', false, e.target.value);
+        colorSwatch.style.backgroundColor = e.target.value;
+        scheduleAutosave();
+      });
+
+      document.addEventListener('selectionchange', updateToolbarState);
+
+      // Menus
+      document.getElementById('copyBtn').addEventListener('click', () => toggleDropdown('copyMenu'));
+      document.querySelectorAll('#copyMenu button').forEach(btn => btn.addEventListener('click', () => handleCopy(btn.dataset.copy)));
+      document.getElementById('exportBtn').addEventListener('click', () => toggleDropdown('exportMenu'));
+      document.querySelectorAll('#exportMenu button').forEach(btn => btn.addEventListener('click', () => handleExport(btn.dataset.export)));
+      document.getElementById('themeBtn').addEventListener('click', () => toggleDropdown('themeMenu'));
+      document.querySelectorAll('#themeMenu button').forEach(btn => btn.addEventListener('click', () => setTheme(btn.dataset.themeVal)));
+      document.getElementById('settingsBtn').addEventListener('click', () => toggleDropdown('settingsMenu'));
+
+      // Settings: Font Family
+      document.querySelectorAll('[data-font]').forEach(btn => {
+        btn.addEventListener('click', () => { state.font = btn.dataset.font; applySettingsUI(); saveAppState(); });
+      });
+      // Settings: Font Size
+      document.getElementById('fontSizeSlider').addEventListener('input', (e) => {
+        state.fontSize = parseInt(e.target.value);
+        document.getElementById('fontSizeVal').innerText = state.fontSize;
+        applySettingsUI();
+        saveAppState();
+      });
+      // Settings: Background Image
+      document.querySelectorAll('.bg-option').forEach(el => {
+        el.addEventListener('click', () => { state.bgUrl = el.dataset.bg; applySettingsUI(); saveAppState(); });
+      });
+      document.getElementById('bgUpload').addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (event) => { state.bgUrl = event.target.result; applySettingsUI(); saveAppState(); };
+          reader.readAsDataURL(file);
+        }
+      });
+      document.getElementById('overlaySlider').addEventListener('input', (e) => {
+        state.bgOverlay = parseInt(e.target.value) / 100;
+        document.getElementById('overlayVal').innerText = e.target.value;
+        applySettingsUI();
+        saveAppState();
+      });
+
+      // Security Listeners
+      document.getElementById('setPinBtn').addEventListener('click', setPin);
+      document.getElementById('removePinBtn').addEventListener('click', removePin);
+      document.getElementById('lockNowBtn').addEventListener('click', showLockScreen);
+      document.getElementById('unlockBtn').addEventListener('click', attemptUnlock);
+      lockInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') attemptUnlock(); });
+
+      // Backup Listeners
+      document.getElementById('backupExportBtn').addEventListener('click', exportBackup);
+      document.getElementById('backupImportInput').addEventListener('change', (e) => {
+        if (e.target.files[0]) importBackup(e.target.files[0]);
+        e.target.value = ''; // reset
+      });
+
+      // Keyboard Shortcuts
+      document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key === 's') { e.preventDefault(); saveImmediate(); }
+        if ((e.ctrlKey || e.metaKey) && e.key === 'n') { e.preventDefault(); createNewDocument(); }
+      });
+      document.addEventListener('visibilitychange', () => { if (document.hidden) saveImmediate(); });
+      window.addEventListener('beforeunload', saveImmediate);
+    }
+
+    function updateToolbarState() {
+      const commands = ['bold', 'italic', 'strikeThrough'];
+      const blocks = ['H1', 'H2', 'H3', 'BLOCKQUOTE', 'PRE'];
+      commands.forEach(cmd => {
+        const btn = document.querySelector(`.tool-btn[data-cmd="${cmd}"]`);
+        if (btn) btn.classList.toggle('active', document.queryCommandState(cmd));
+      });
+      const block = document.queryCommandValue('formatBlock').toUpperCase();
+      blocks.forEach(b => {
+        const btn = document.querySelector(`.tool-btn[data-val="${b}"]`);
+        if (btn) btn.classList.toggle('active', block === b);
+      });
+    }
+
+    // --- Copy & Export ---
+    async function handleCopy(type) {
+      saveImmediate();
+      const html = editor.innerHTML;
+      const text = editor.innerText;
+      try {
+        if (type === 'rich') {
+          const item = new ClipboardItem({
+            'text/html': new Blob([html], { type: 'text/html' }),
+            'text/plain': new Blob([text], { type: 'text/plain' })
+          });
+          await navigator.clipboard.write([item]);
+        } else if (type === 'md') {
+          await navigator.clipboard.writeText(turndownService.turndown(html));
+        } else {
+          await navigator.clipboard.writeText(text);
+        }
+        setStatus('Copied!', 'saved');
+      } catch (err) { alert('Failed to copy: ' + err.message); }
+      toggleDropdown('copyMenu');
+    }
+
+    function handleExport(type) {
+      saveImmediate();
+      const doc = state.docs[state.activeTabId];
+      const filename = (doc.title || 'untitled').replace(/[\/\?<>\\:\*\|":]/g, '').trim() || 'untitled';
+      let content = '', mimeType = '';
+      if (type === 'md') { content = turndownService.turndown(editor.innerHTML); mimeType = 'text/markdown'; }
+      else { content = editor.innerText; mimeType = 'text/plain'; }
+      const blob = new Blob([content], { type: mimeType });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `${filename}.${type}`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      toggleDropdown('exportMenu');
+    }
+
+    // --- UI Helpers ---
+    function toggleDropdown(id) {
+      const menu = document.getElementById(id);
+      const isOpen = menu.style.display === 'block' || (id === 'settingsMenu' && menu.style.display === 'flex');
+      document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+      if (!isOpen) menu.style.display = id === 'settingsMenu' ? 'flex' : 'block';
+    }
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.dropdown')) document.querySelectorAll('.dropdown-menu').forEach(m => m.style.display = 'none');
+    });
+
+    function setTheme(themeName) {
+      state.theme = themeName;
+      applyTheme();
+      saveAppState();
+      toggleDropdown('themeMenu');
+    }
+
+    function applyTheme() {
+      document.documentElement.setAttribute('data-theme', state.theme);
+      applySettingsUI();
+    }
+
+    function applySettingsUI() {
+      document.documentElement.style.setProperty('--font-editor', state.font);
+      document.documentElement.style.setProperty('--font-editor-size', `${state.fontSize}px`);
+      const bgUrl = state.bgUrl === 'none' ? 'none' : `url('${state.bgUrl}')`;
+      document.documentElement.style.setProperty('--bg-image-url', bgUrl);
+      document.documentElement.style.setProperty('--bg-overlay-opacity', state.bgOverlay);
+
+      document.querySelectorAll('[data-font]').forEach(btn => {
+        btn.style.borderColor = btn.dataset.font === state.font ? 'var(--accent-color)' : 'var(--border-color)';
+      });
+      document.querySelectorAll('.bg-option').forEach(el => {
+        el.classList.toggle('active', el.dataset.bg === state.bgUrl);
+      });
+
+      document.getElementById('fontSizeSlider').value = state.fontSize;
+      document.getElementById('fontSizeVal').innerText = state.fontSize;
+      document.getElementById('overlaySlider').value = state.bgOverlay * 100;
+      document.getElementById('overlayVal').innerText = Math.round(state.bgOverlay * 100);
+
+      // Security UI states
+      const hasPin = state.pinHash !== null;
+      document.getElementById('setPinBtn').style.display = hasPin ? 'none' : 'block';
+      document.getElementById('removePinBtn').style.display = hasPin ? 'block' : 'none';
+      document.getElementById('lockNowBtn').style.display = hasPin ? 'block' : 'none';
+    }
+
+    // Start the app
+    init();
+  </script>
+</body>
+</html>

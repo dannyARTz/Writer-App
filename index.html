@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Writing Desk</title>
   
   <!-- Dependencies via CDN -->
@@ -91,13 +91,16 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
+      padding: 20px;
     }
     .lock-container {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 16px;
-      padding: 40px;
+      padding: 40px 20px;
+      width: 100%;
+      max-width: 320px;
       border: 1px solid var(--border-color);
       border-radius: 12px;
       background-color: var(--bg-secondary);
@@ -108,8 +111,8 @@
       font-size: 24px;
       letter-spacing: 12px;
       text-align: center;
-      width: 150px;
-      padding: 8px;
+      width: 100%;
+      padding: 12px;
       border: 1px solid var(--border-color);
       border-radius: 6px;
       background-color: var(--bg-color);
@@ -127,6 +130,7 @@
       background-color: var(--bg-secondary);
       position: relative;
       z-index: 20;
+      flex-shrink: 0;
     }
 
     .tab-bar {
@@ -136,6 +140,7 @@
       height: 40px;
       overflow-x: auto;
       scrollbar-width: none;
+      flex-shrink: 0;
     }
     .tab-bar::-webkit-scrollbar { display: none; }
 
@@ -151,8 +156,9 @@
       cursor: pointer;
       font-size: 13px;
       white-space: nowrap;
-      max-width: 200px;
+      max-width: 150px;
       transition: background 0.2s, color 0.2s;
+      flex-shrink: 0;
     }
     .tab:hover { background-color: rgba(0,0,0,0.05); }
     [data-theme="dark"] .tab:hover, [data-theme="night"] .tab:hover { background-color: rgba(255,255,255,0.05); }
@@ -175,34 +181,53 @@
 
     .new-tab-btn {
       background: none; border: none; color: var(--text-secondary);
-      font-size: 18px; padding: 4px 8px; cursor: pointer;
+      font-size: 18px; padding: 4px 8px; cursor: pointer; flex-shrink: 0;
     }
     .new-tab-btn:hover { color: var(--text-color); }
 
     /* Action Bar */
     .action-bar {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 8px 16px; background-color: var(--bg-color);
+      display: flex; 
+      flex-wrap: wrap; 
+      align-items: center;
+      padding: 8px 16px; 
+      background-color: var(--bg-color);
       border-top: 1px solid var(--border-color);
+      gap: 8px;
     }
 
     .doc-title-input {
-      flex: 1; background: transparent; border: none; font-size: 18px;
-      font-weight: 600; color: var(--text-color); outline: none; padding: 4px 0;
+      flex: 1; 
+      min-width: 150px;
+      background: transparent; 
+      border: none; 
+      font-size: 18px;
+      font-weight: 600; 
+      color: var(--text-color); 
+      outline: none; 
+      padding: 4px 0;
     }
     .doc-title-input::placeholder { color: var(--text-secondary); opacity: 0.6; }
 
-    .status-info { font-size: 12px; color: var(--text-secondary); margin-right: 16px; font-variant-numeric: tabular-nums; }
+    .status-info { 
+      font-size: 12px; 
+      color: var(--text-secondary); 
+      margin-right: auto; 
+      font-variant-numeric: tabular-nums; 
+      white-space: nowrap;
+      padding: 0 8px;
+    }
     .status-saving { color: #f59e0b; }
     .status-saved { color: #10b981; }
 
-    .actions-group { display: flex; gap: 8px; align-items: center; }
+    .actions-group { display: flex; gap: 8px; align-items: center; flex-wrap: nowrap; }
 
     .btn {
       background-color: var(--bg-secondary); border: 1px solid var(--border-color);
       color: var(--text-color); padding: 6px 12px; border-radius: 6px;
       font-size: 13px; cursor: pointer; font-family: var(--font-ui); transition: background 0.2s;
       display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      white-space: nowrap;
     }
     .btn:hover { background-color: var(--border-color); }
     .btn-danger { color: var(--danger-color); border-color: var(--danger-color); }
@@ -222,7 +247,13 @@
     .dropdown-menu button:hover { background-color: var(--bg-secondary); }
     
     .settings-menu {
-      min-width: 300px; padding: 16px; display: flex; flex-direction: column; gap: 20px;
+      min-width: unset;
+      width: calc(100vw - 24px); 
+      max-width: 320px; 
+      max-height: 80vh; 
+      overflow-y: auto;
+      padding: 16px; 
+      display: flex; flex-direction: column; gap: 20px;
     }
     .settings-group { display: flex; flex-direction: column; gap: 8px; }
     .settings-label {
@@ -241,7 +272,8 @@
 
     /* Main Area & Background Layers */
     .main-area {
-      height: calc(100vh - 40px - 53px); display: flex; flex-direction: column;
+      flex: 1; 
+      display: flex; flex-direction: column;
       overflow-y: auto; position: relative; background-color: var(--bg-color);
       background-image: var(--bg-image-url); background-size: cover;
       background-position: center; background-attachment: fixed;
@@ -253,20 +285,25 @@
     }
 
     .toolbar {
-      position: sticky; top: 0; display: flex; justify-content: center;
-      align-items: center; gap: 4px; padding: 8px; background-color: var(--bg-color);
+      position: sticky; top: 0; display: flex; 
+      justify-content: flex-start; 
+      align-items: center; gap: 4px; padding: 8px; 
+      background-color: var(--bg-color);
       z-index: 10; border-bottom: 1px solid var(--border-color);
+      overflow-x: auto; scrollbar-width: none;
     }
+    .toolbar::-webkit-scrollbar { display: none; }
 
     .tool-btn {
       background: none; border: 1px solid transparent; padding: 6px 10px;
       border-radius: 4px; cursor: pointer; color: var(--text-secondary);
       font-size: 14px; font-family: var(--font-ui); display: flex; align-items: center;
+      flex-shrink: 0;
     }
     .tool-btn:hover { background-color: var(--bg-secondary); }
     .tool-btn.active { background-color: var(--border-color); color: var(--text-color); }
 
-    .divider { width: 1px; height: 20px; background-color: var(--border-color); margin: 0 4px; }
+    .divider { width: 1px; height: 20px; background-color: var(--border-color); margin: 0 4px; flex-shrink: 0; }
 
     .color-tool { position: relative; display: flex; align-items: center; cursor: pointer; }
     .color-tool input[type="color"] { position: absolute; opacity: 0; width: 100%; height: 100%; cursor: pointer; }
@@ -280,6 +317,7 @@
     .editor {
       outline: none; font-family: var(--font-editor); font-size: var(--font-editor-size);
       line-height: 1.7; color: var(--text-color); min-height: 60vh;
+      word-wrap: break-word; 
     }
     .editor:empty:before { content: "Start writing your thoughts..."; color: var(--text-secondary); opacity: 0.4; pointer-events: none; }
     .editor h1 { font-size: 2em; margin-top: 1.5em; margin-bottom: 0.5em; }
@@ -291,6 +329,37 @@
     .editor code { background: var(--bg-secondary); padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', Courier, monospace; font-size: 0.9em; }
     .editor a { color: var(--accent-color); text-decoration: underline; }
     .editor ul, .editor ol { padding-left: 2em; margin-bottom: 1.2em; }
+
+    /* Mobile Responsive Adjustments */
+    @media (max-width: 600px) {
+      .action-bar {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 8px 12px;
+      }
+      .doc-title-input {
+        width: 100%;
+        font-size: 16px;
+        padding: 4px;
+        margin-bottom: 4px;
+      }
+      .actions-group {
+        justify-content: space-between;
+        width: 100%;
+      }
+      .status-info {
+        margin-right: 0;
+        font-size: 11px;
+        order: 2; /* Put word count below buttons on mobile if it wraps, but here it sits nicely */
+      }
+      .btn {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+      .editor-container {
+        padding: 20px 16px 120px 16px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -301,139 +370,141 @@
   <div class="lock-screen" id="lockScreen" style="display: none;">
     <div class="lock-container">
       <div class="lock-icon">🔒</div>
-      <input type="password" class="lock-input" id="lockInput" maxlength="4" placeholder="••••">
+      <input type="password" class="lock-input" id="lockInput" maxlength="4" placeholder="••••" inputmode="numeric">
       <div class="lock-error" id="lockError"></div>
       <button class="btn" id="unlockBtn" style="width: 100%;">Unlock</button>
     </div>
   </div>
 
-  <div class="top-bar">
-    <div class="tab-bar" id="tabBar"></div>
-    <div class="action-bar">
-      <input type="text" class="doc-title-input" id="docTitle" placeholder="Untitled">
-      <div class="status-info" id="statusInfo">0 words · 0 chars</div>
-      <div class="actions-group">
-        <div class="dropdown">
-          <button class="btn" id="copyBtn">Copy ▾</button>
-          <div class="dropdown-menu" id="copyMenu">
-            <button data-copy="rich">Copy as Rich Text</button>
-            <button data-copy="md">Copy as Markdown</button>
-            <button data-copy="plain">Copy as Plain Text</button>
+  <div style="display: flex; flex-direction: column; height: 100vh; height: 100dvh;">
+    <div class="top-bar">
+      <div class="tab-bar" id="tabBar"></div>
+      <div class="action-bar">
+        <input type="text" class="doc-title-input" id="docTitle" placeholder="Untitled">
+        <div class="status-info" id="statusInfo">0 words · 0 chars</div>
+        <div class="actions-group">
+          <div class="dropdown">
+            <button class="btn" id="copyBtn">Copy</button>
+            <div class="dropdown-menu" id="copyMenu">
+              <button data-copy="rich">Copy as Rich Text</button>
+              <button data-copy="md">Copy as Markdown</button>
+              <button data-copy="plain">Copy as Plain Text</button>
+            </div>
           </div>
-        </div>
-        <div class="dropdown">
-          <button class="btn" id="exportBtn">Export ▾</button>
-          <div class="dropdown-menu" id="exportMenu">
-            <button data-export="md">Export as Markdown (.md)</button>
-            <button data-export="txt">Export as Plain Text (.txt)</button>
+          <div class="dropdown">
+            <button class="btn" id="exportBtn">Export</button>
+            <div class="dropdown-menu" id="exportMenu">
+              <button data-export="md">Export as Markdown (.md)</button>
+              <button data-export="txt">Export as Plain Text (.txt)</button>
+            </div>
           </div>
-        </div>
-        <div class="dropdown">
-          <button class="btn" id="themeBtn">Mode ▾</button>
-          <div class="dropdown-menu" id="themeMenu">
-            <button data-theme-val="light">☀️ Light</button>
-            <button data-theme-val="dark">🌙 Dark</button>
-            <button data-theme-val="sepia">📄 Sepia</button>
-            <button data-theme-val="night">🌌 Night</button>
+          <div class="dropdown">
+            <button class="btn" id="themeBtn">Mode</button>
+            <div class="dropdown-menu" id="themeMenu">
+              <button data-theme-val="light">☀️ Light</button>
+              <button data-theme-val="dark">🌙 Dark</button>
+              <button data-theme-val="sepia">📄 Sepia</button>
+              <button data-theme-val="night">🌌 Night</button>
+            </div>
           </div>
-        </div>
-        <div class="dropdown">
-          <button class="btn" id="settingsBtn">⚙️</button>
-          <div class="dropdown-menu settings-menu" id="settingsMenu">
-            
-            <div class="settings-group">
-              <span class="settings-label">Font Family</span>
-              <div class="settings-row">
-                <button class="btn" data-font="Georgia, serif" style="flex:1;">Serif</button>
-                <button class="btn" data-font="Inter, system-ui, sans-serif" style="flex:1;">Sans</button>
-                <button class="btn" data-font="Menlo, monospace" style="flex:1;">Mono</button>
+          <div class="dropdown">
+            <button class="btn" id="settingsBtn">⚙️</button>
+            <div class="dropdown-menu settings-menu" id="settingsMenu">
+              
+              <div class="settings-group">
+                <span class="settings-label">Font Family</span>
+                <div class="settings-row">
+                  <button class="btn" data-font="Georgia, serif" style="flex:1;">Serif</button>
+                  <button class="btn" data-font="Inter, system-ui, sans-serif" style="flex:1;">Sans</button>
+                  <button class="btn" data-font="Menlo, monospace" style="flex:1;">Mono</button>
+                </div>
               </div>
-            </div>
 
-            <div class="settings-group">
-              <span class="settings-label">Font Size (<span id="fontSizeVal">18</span>px)</span>
-              <input type="range" id="fontSizeSlider" min="14" max="28" value="18">
-            </div>
-
-            <div class="settings-group">
-              <span class="settings-label">Background Image</span>
-              <div class="bg-options-grid">
-                <div class="bg-option bg-option-none active" data-bg="none">None</div>
-                <div class="bg-option" data-bg="https://images.unsplash.com/photo-1454165804606-c3d57bc86b42?auto=format&fit=crop&w=200&q=40" style="background-image: url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b42?auto=format&fit=crop&w=200&q=40');"></div>
-                <div class="bg-option" data-bg="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=200&q=40" style="background-image: url('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=200&q=40');"></div>
-                <div class="bg-option" data-bg="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=200&q=40" style="background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=200&q=40');"></div>
+              <div class="settings-group">
+                <span class="settings-label">Font Size (<span id="fontSizeVal">18</span>px)</span>
+                <input type="range" id="fontSizeSlider" min="14" max="28" value="18">
               </div>
-              <label class="btn" style="margin-top: 8px; cursor: pointer; width: 100%;">
-                Upload Custom Image
-                <input type="file" id="bgUpload" accept="image/*" style="display: none;">
-              </label>
-            </div>
 
-            <div class="settings-group">
-              <span class="settings-label">Overlay Opacity (<span id="overlayVal">85</span>%)</span>
-              <input type="range" id="overlaySlider" min="0" max="100" value="85">
-            </div>
-
-            <div class="settings-group">
-              <span class="settings-label">Security</span>
-              <div class="settings-row" id="pinSettings">
-                <button class="btn" id="setPinBtn" style="flex:1;">Set PIN Lock</button>
-                <button class="btn btn-danger" id="removePinBtn" style="flex:1; display:none;">Remove PIN</button>
-              </div>
-              <button class="btn" id="lockNowBtn" style="width:100%; margin-top:8px; display:none;">Lock Now</button>
-            </div>
-
-            <div class="settings-group">
-              <span class="settings-label">Backup & Restore (Google Drive)</span>
-              <div class="settings-row">
-                <button class="btn" id="backupExportBtn" style="flex:1;">Export Backup</button>
-                <label class="btn" style="flex:1; cursor: pointer;">
-                  Import Backup
-                  <input type="file" id="backupImportInput" accept=".wdb,.json" style="display: none;">
+              <div class="settings-group">
+                <span class="settings-label">Background Image</span>
+                <div class="bg-options-grid">
+                  <div class="bg-option bg-option-none active" data-bg="none">None</div>
+                  <div class="bg-option" data-bg="https://images.unsplash.com/photo-1454165804606-c3d57bc86b42?auto=format&fit=crop&w=200&q=40" style="background-image: url('https://images.unsplash.com/photo-1454165804606-c3d57bc86b42?auto=format&fit=crop&w=200&q=40');"></div>
+                  <div class="bg-option" data-bg="https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=200&q=40" style="background-image: url('https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?auto=format&fit=crop&w=200&q=40');"></div>
+                  <div class="bg-option" data-bg="https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=200&q=40" style="background-image: url('https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=200&q=40');"></div>
+                </div>
+                <label class="btn" style="margin-top: 8px; cursor: pointer; width: 100%;">
+                  Upload Custom Image
+                  <input type="file" id="bgUpload" accept="image/*" style="display: none;">
                 </label>
               </div>
-            </div>
 
+              <div class="settings-group">
+                <span class="settings-label">Overlay Opacity (<span id="overlayVal">85</span>%)</span>
+                <input type="range" id="overlaySlider" min="0" max="100" value="85">
+              </div>
+
+              <div class="settings-group">
+                <span class="settings-label">Security</span>
+                <div class="settings-row" id="pinSettings">
+                  <button class="btn" id="setPinBtn" style="flex:1;">Set PIN Lock</button>
+                  <button class="btn btn-danger" id="removePinBtn" style="flex:1; display:none;">Remove PIN</button>
+                </div>
+                <button class="btn" id="lockNowBtn" style="width:100%; margin-top:8px; display:none;">Lock Now</button>
+              </div>
+
+              <div class="settings-group">
+                <span class="settings-label">Backup & Restore (Google Drive)</span>
+                <div class="settings-row">
+                  <button class="btn" id="backupExportBtn" style="flex:1;">Export Backup</button>
+                  <label class="btn" style="flex:1; cursor: pointer;">
+                    Import Backup
+                    <input type="file" id="backupImportInput" accept=".wdb,.json" style="display: none;">
+                  </label>
+                </div>
+              </div>
+
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
 
-  <div class="main-area">
-    <div class="toolbar" id="toolbar">
-      <button class="tool-btn" data-cmd="formatBlock" data-val="H1">H1</button>
-      <button class="tool-btn" data-cmd="formatBlock" data-val="H2">H2</button>
-      <button class="tool-btn" data-cmd="formatBlock" data-val="H3">H3</button>
-      <div class="divider"></div>
-      <button class="tool-btn" data-cmd="bold"><b>B</b></button>
-      <button class="tool-btn" data-cmd="italic"><i>I</i></button>
-      <button class="tool-btn" data-cmd="strikeThrough"><s>S</s></button>
-      <button class="tool-btn" data-cmd="createLink">Link</button>
-      
-      <label class="tool-btn color-tool" title="Text Color">
-        Color
-        <input type="color" id="textColorPicker" value="#000000">
-        <span class="color-swatch" id="colorSwatch"></span>
-      </label>
+    <div class="main-area">
+      <div class="toolbar" id="toolbar">
+        <button class="tool-btn" data-cmd="formatBlock" data-val="H1">H1</button>
+        <button class="tool-btn" data-cmd="formatBlock" data-val="H2">H2</button>
+        <button class="tool-btn" data-cmd="formatBlock" data-val="H3">H3</button>
+        <div class="divider"></div>
+        <button class="tool-btn" data-cmd="bold"><b>B</b></button>
+        <button class="tool-btn" data-cmd="italic"><i>I</i></button>
+        <button class="tool-btn" data-cmd="strikeThrough"><s>S</s></button>
+        <button class="tool-btn" data-cmd="createLink">Link</button>
+        
+        <label class="tool-btn color-tool" title="Text Color">
+          Color
+          <input type="color" id="textColorPicker" value="#000000">
+          <span class="color-swatch" id="colorSwatch"></span>
+        </label>
 
-      <div class="divider"></div>
-      <button class="tool-btn" data-cmd="insertUnorderedList">• List</button>
-      <button class="tool-btn" data-cmd="insertOrderedList">1. List</button>
-      <button class="tool-btn" data-cmd="formatBlock" data-val="BLOCKQUOTE">Quote</button>
-      <button class="tool-btn" data-cmd="formatBlock" data-val="PRE">Code</button>
-      <div class="divider"></div>
-      <button class="tool-btn" data-cmd="undo">↶</button>
-      <button class="tool-btn" data-cmd="redo">↷</button>
-    </div>
+        <div class="divider"></div>
+        <button class="tool-btn" data-cmd="insertUnorderedList">• List</button>
+        <button class="tool-btn" data-cmd="insertOrderedList">1. List</button>
+        <button class="tool-btn" data-cmd="formatBlock" data-val="BLOCKQUOTE">Quote</button>
+        <button class="tool-btn" data-cmd="formatBlock" data-val="PRE">Code</button>
+        <div class="divider"></div>
+        <button class="tool-btn" data-cmd="undo">↶</button>
+        <button class="tool-btn" data-cmd="redo">↷</button>
+      </div>
 
-    <div class="editor-container">
-      <div class="editor" id="editor" contenteditable="true">Loading writing desk...</div>
+      <div class="editor-container">
+        <div class="editor" id="editor" contenteditable="true">Loading writing desk...</div>
+      </div>
     </div>
   </div>
 
   <script>
-    // Global Error Handler to catch CDN load failures or syntax issues
+    // Global Error Handler
     window.addEventListener('error', function (e) {
       const errorDisplay = document.getElementById('errorDisplay');
       errorDisplay.style.display = 'block';
@@ -460,16 +531,10 @@
     let saveTimeout = null;
     let savedRange = null;
 
-    // Check if localforage loaded successfully
-    if (typeof localforage === 'undefined') {
-      throw new Error('localforage library failed to load from CDN.');
-    }
+    if (typeof localforage === 'undefined') throw new Error('localforage library failed to load from CDN.');
     const store = localforage.createInstance({ name: 'WritingDesk' });
 
-    // Check if turndown loaded successfully
-    if (typeof TurndownService === 'undefined') {
-      throw new Error('TurndownService library failed to load from CDN.');
-    }
+    if (typeof TurndownService === 'undefined') throw new Error('TurndownService library failed to load from CDN.');
     const turndownService = new TurndownService({ headingStyle: 'atx', codeBlockStyle: 'fenced' });
 
     // --- DOM Elements ---
@@ -494,7 +559,6 @@
         state.bgOverlay = appState.bgOverlay !== undefined ? appState.bgOverlay : 0.85;
         state.pinHash = appState.pinHash || null;
         
-        // Check security first
         if (state.pinHash) {
           showLockScreen();
         } else {
@@ -532,7 +596,7 @@
     }
 
     async function loadAllDocs() {
-      state.docs = {}; // Clear memory
+      state.docs = {};
       await store.iterate((value, key) => {
         if (key.startsWith('doc_')) {
           state.docs[value.id] = value;
@@ -807,7 +871,7 @@
       return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     }
 
-    // --- Smart Enter Key Handler (Escape Blocks) ---
+    // --- Smart Enter Key Handler ---
     function handleEnterKey(e) {
       if (e.key !== 'Enter' || e.shiftKey) return;
       const selection = window.getSelection();
@@ -869,6 +933,31 @@
             document.execCommand(cmd, false, null);
           }
           updateToolbarState();
+        });
+        
+        // Also handle touchend for mobile devices to prevent default scrolling behavior when tapping tools
+        btn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            const cmd = btn.dataset.cmd;
+            const val = btn.dataset.val;
+            if (cmd === 'createLink') {
+              const url = prompt('Enter URL:');
+              if (url) document.execCommand(cmd, false, url);
+            } else if (cmd === 'formatBlock') {
+              if (editor.innerHTML.trim() === '') {
+                editor.innerHTML = '<p><br></p>';
+                const range = document.createRange();
+                range.selectNodeContents(editor);
+                range.collapse(true);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+              }
+              document.execCommand(cmd, false, val);
+            } else {
+              document.execCommand(cmd, false, null);
+            }
+            updateToolbarState();
         });
       });
 
@@ -941,7 +1030,7 @@
       document.getElementById('backupExportBtn').addEventListener('click', exportBackup);
       document.getElementById('backupImportInput').addEventListener('change', (e) => {
         if (e.target.files[0]) importBackup(e.target.files[0]);
-        e.target.value = ''; // reset
+        e.target.value = '';
       });
 
       // Keyboard Shortcuts
@@ -1050,7 +1139,6 @@
       document.getElementById('overlaySlider').value = state.bgOverlay * 100;
       document.getElementById('overlayVal').innerText = Math.round(state.bgOverlay * 100);
 
-      // Security UI states
       const hasPin = state.pinHash !== null;
       document.getElementById('setPinBtn').style.display = hasPin ? 'none' : 'block';
       document.getElementById('removePinBtn').style.display = hasPin ? 'block' : 'none';
